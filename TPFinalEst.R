@@ -19,9 +19,11 @@ sapply(body, class)
 
 #Etapa Exploratoria -----------------------------------------------------------------------------------------------------------
 
-#b.)
 
-#Primero separamos los datos segun su gener0
+
+#B.)
+
+#Primero separamos los datos segun su genero
 
 #Weight Men y su medianda
 WEIG_M <-  body[body$GEN == 1, ]$WEIG
@@ -78,6 +80,33 @@ alfa <- 0.05
 z <- qnorm(1-alfa/2)
 
 IDC_Wom <- c(T_M - z*seBootWom,T_M + z*seBootWom)
+
+
+
+#C)
+
+HEIG_M <-  body[body$GEN == 1, ]$HEIG
+
+HEIG_W <-  body[body$GEN == 0, ]$HEIG
+
+plot(WEIG_M,HEIG_M,main = "Peso-Altura Hombres", xlab = "Peso" , ylab = "Altura")
+
+plot(WEIG_W,HEIG_W,main = "Peso-Altura Mujeres", xlab = "Peso" , ylab = "Altura")
+
+# Los graficos parecen indicar que a mayor peso se tendra mayor altura y vice-versa.
+
+
+
+#D.)
+
+
+plot(WEIG_M,HEIG_M,main = "Peso-Altura Hombres", xlab = "Peso" , ylab = "Altura")
+ksm <- ksmooth(WEIG_M,HEIG_M, "normal", bandwidth = 10)
+lines(ksm$x, ksm$y, col = "red", lwd = 2)
+
+
+
+
 
 
 

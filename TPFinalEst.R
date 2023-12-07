@@ -81,7 +81,11 @@ z <- qnorm(1-alfa/2)
 
 IDC_Wom <- c(T_M - z*seBootWom,T_M + z*seBootWom)
 
-
+#Falta la interpretacion
+#Se podria decir que el peso no es una medida muy significativa a la hora de diferencia a un hombre de una mujer, 
+#ya que ambos tienen medias muy parecidas. Aunque los hombres tienen mas dispersion, por lo que podemos decir que
+#cuanto mas alejado se encuentre un peso de la media mas probabilidad hay de que sea un hombre. Ademas a la hora de diferenciar
+#grupos de hombres de grupos de mujeres, podemos usar el desvio estandar como diferenciador
 
 #C)
 
@@ -95,7 +99,7 @@ plot(WEIG_W,HEIG_W,main = "Peso-Altura Mujeres", xlab = "Peso" , ylab = "Altura"
 
 # Los graficos parecen indicar que a mayor peso se tendra mayor altura y vice-versa.
 
-
+# Estaria bueno que se grafiquen los dos juntos diferenciando por color
 
 #D.)
 

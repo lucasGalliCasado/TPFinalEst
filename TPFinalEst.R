@@ -100,6 +100,7 @@ plot(WEIG_W,HEIG_W,main = "Peso-Altura Mujeres", xlab = "Peso" , ylab = "Altura"
 # Los graficos parecen indicar que a mayor peso se tendra mayor altura y vice-versa.
 
 # Estaria bueno que se grafiquen los dos juntos diferenciando por color
+# Ver si como diferenciar a los hombres de las mujeres
 
 #D.)
 

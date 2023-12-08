@@ -118,3 +118,68 @@ lines(ksm$x, ksm$y, col = "red", lwd = 2)
 # Por otro lado en las mujeres, no esta tan claro que la regresion parametrica sea parecida a una regresion lineal, ya que
 # esta tiene irregularidades mas pronunciadas. Por lo que sospechamos una regresion lineal para los hombres y una regresion
 # ¿cuadratica? para las mujeres.
+
+# E.)
+# calculo la estimacion en Xi sin usar el i-esimo dato
+mi_h = function(X,Y,i,h){
+  n=length(X)
+  Xi=X[i] #punto a evaluar la estimacion
+  sum=0
+  temp=0 
+  for(j in 1:n){
+    if(j!=i){
+      sum=sum+(Y[j]*dnorm((X[j]-Xi)/h))
+      temp=temp+dnorm((X[j]-Xi)/h)
+    }
+  }
+  return(sum/temp)
+}
+# calculo el error cuadratico de la convalidacion cruzada
+CV = function(X,Y,h){
+  n=length(X)
+  sum=0
+  for(i in 1:n){
+    sum=sum+(Y[i]-mi_h(X,Y,i,h))^2
+  }
+  return(sum/n)
+}
+# busco el h en hs que minimize el CV
+h_opt= function(X,Y,hs){
+  n=length(hs)
+  h=hs[1]
+  cv_h=CV(X,Y,h)
+  for(i in 2:n){
+    temp=CV(X,Y,hs[i])
+    if(temp<cv_h){
+      h=hs[i]
+      cv_h=temp
+    }
+  }
+  return(h)
+}
+
+hs= seq(5,20,by=0.5)
+
+# No entiendo como usar la nota, y como quiere que grafique
+
+# Para cada g´enero grafique la funci´on objetivo y represente all´ı la ventana ´optima hallada
+# de acuerdo al criterio que est´a utilizando.
+# Nota: Para verificar la respuesta, explorar la funci´on train de la librer´ıa caret.
+
+# F.)
+
+# Grafico de los hombres
+h_M=h_opt(WEIG_M,HEIG_M,hs)
+plot(WEIG_M,HEIG_M,main = "Peso-Altura Hombres, regresion no parametrica con ventana 5 y regresion lineal", xlab = "Peso" , ylab = "Altura")
+ksm <- ksmooth(WEIG_M,HEIG_M, "normal", bandwidth = h_M)
+lines(ksm$x, ksm$y, col = "red", lwd = 2)
+# agregar regresion lineal de cuadrados minimos
+
+# Grafico de las mujeres
+h_W=h_opt(WEIG_W,HEIG_W,hs)
+plot(WEIG_W,HEIG_W,main = "Peso-Altura Mujeres, regresion no parametrica con ventana 5 y regresion lineal", xlab = "Peso" , ylab = "Altura")
+ksm <- ksmooth(WEIG_W,HEIG_W, "normal", bandwidth = h_W)
+lines(ksm$x, ksm$y, col = "red", lwd = 2)
+# agregar regresion lineal de cuadrados minimos
+
+# Falta poner la ventana no se como hacerlo

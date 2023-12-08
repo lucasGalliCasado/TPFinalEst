@@ -104,18 +104,17 @@ plot(WEIG_W,HEIG_W,main = "Peso-Altura Mujeres", xlab = "Peso" , ylab = "Altura"
 
 #D.)
 
-
+# Grafico de los hombres
 plot(WEIG_M,HEIG_M,main = "Peso-Altura Hombres", xlab = "Peso" , ylab = "Altura")
 ksm <- ksmooth(WEIG_M,HEIG_M, "normal", bandwidth = 10)
 lines(ksm$x, ksm$y, col = "red", lwd = 2)
 
+# Grafico de las mujeres
+plot(WEIG_W,HEIG_W,main = "Peso-Altura Mujeres", xlab = "Peso" , ylab = "Altura")
+ksm <- ksmooth(WEIG_W,HEIG_W, "normal", bandwidth = 10)
+lines(ksm$x, ksm$y, col = "red", lwd = 2)
 
-
-
-
-
-
-
-
-
-
+# En el caso de los hombres, podemos ver que salvo el final la regresion no parametrica se parece mucho a una regresion lineal.
+# Por otro lado en las mujeres, no esta tan claro que la regresion parametrica sea parecida a una regresion lineal, ya que
+# esta tiene irregularidades mas pronunciadas. Por lo que sospechamos una regresion lineal para los hombres y una regresion
+# ¿cuadratica? para las mujeres.

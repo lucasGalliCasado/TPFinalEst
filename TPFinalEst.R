@@ -1,6 +1,6 @@
 TrainTest <- read.table("TrainTest.txt")
 
-body <- read.csv("body.csv")
+body <- read.csv("body.csv",header = FALSE)
 
 #Le asignamos el nombre correspondiente a las columnas del data set
 colnames(body)<- (c("BIAC","BIIL","BITRO","CHEST1","CHEST2","ELBOW","WRIST",
@@ -99,7 +99,10 @@ plot(WEIG_W,HEIG_W,main = "Peso-Altura Mujeres", xlab = "Peso" , ylab = "Altura"
 
 # Los graficos parecen indicar que a mayor peso se tendra mayor altura y vice-versa.
 
-# Estaria bueno que se grafiquen los dos juntos diferenciando por color
+#Graficamos ambos en simultaneo
+plot(WEIG_M,HEIG_M,main = "Peso-Altura Mixto", xlab = "Peso" , ylab = "Altura",col = "blue")
+points(WEIG_W,HEIG_W,col= "pink")
+
 # Ver si como diferenciar a los hombres de las mujeres
 
 #D.)
@@ -171,36 +174,93 @@ hs= seq(5,20,by=0.5)
 # Grafico de los hombres
 h_M=h_opt(WEIG_M,HEIG_M,hs)
 plot(WEIG_M,HEIG_M,main = "Peso-Altura Hombres, regresion no parametrica con ventana 5 y regresion lineal", xlab = "Peso" , ylab = "Altura")
+# Reg. no parametrica con h optimo
 ksm <- ksmooth(WEIG_M,HEIG_M, "normal", bandwidth = h_M)
 lines(ksm$x, ksm$y, col = "red", lwd = 2)
-# agregar regresion lineal de cuadrados minimos
+# Regresion lineal de cuadrados minimos
+regL_M <- lm(HEIG_M ~ WEIG_M)
+abline(regL_M, col = "blue",lwd =2)
 
 # Grafico de las mujeres
 h_W=h_opt(WEIG_W,HEIG_W,hs)
 plot(WEIG_W,HEIG_W,main = "Peso-Altura Mujeres, regresion no parametrica con ventana 5 y regresion lineal", xlab = "Peso" , ylab = "Altura")
 ksm <- ksmooth(WEIG_W,HEIG_W, "normal", bandwidth = h_W)
 lines(ksm$x, ksm$y, col = "red", lwd = 2)
-# agregar regresion lineal de cuadrados minimos
+# Regresion lineal de cuadrados minimos
+regL_W <- lm(HEIG_W ~ WEIG_W)
+abline(regL_W, col = "blue",lwd =2)
 
-# Falta poner la ventana no se como hacerlo
+
+
+
 
 # Regresion lineal -----------------------------------------------------------------------------------------------------------
 
 # G.)
-#a partir de aca es un intento
-# armamos el cjto de entrenamiento
-bodyt=data.frame()
-n=length(body)
-j=1
-for(i in 1:n){
-  if(TrainTest$V1[i]){
-    bodyt[j]=body[i]
-    j=j+1
-  }
-}
+
+TrainTest= TrainTest$V1
+
+#Datos de Training del modelo
+bodYTrain = body[TrainTest,]
+colnames(bodYTrain)<- (c("BIAC","BIIL","BITRO","CHEST1","CHEST2","ELBOW","WRIST",
+                    "KNEE","ANKLE","SHOUL","CHESTG","WAISTG","NAVEL","HIP","GLUTE","BICEP",
+                    "FLOREA","KNEEG","CALF","ANKLEG","WRISTG","AGE","WEIG","HEIG","GEN"))
+
+
+#Datos de validacion del modelo
+bodyTest = body[!TrainTest,]
+colnames(bodYTest)<- (c("BIAC","BIIL","BITRO","CHEST1","CHEST2","ELBOW","WRIST",
+                         "KNEE","ANKLE","SHOUL","CHESTG","WAISTG","NAVEL","HIP","GLUTE","BICEP",
+                         "FLOREA","KNEEG","CALF","ANKLEG","WRISTG","AGE","WEIG","HEIG","GEN"))
+
 
 # ajusto el modelo para predecir WIEG en funcion del resto
-#BIAC+BIIL+BITRO+CHEST1+CHEST2+ELBOW+WRIST+KNEE+ANKLE+SHOUL+CHESTG+WAISTG+NAVEL+HIPGLUTE+BICEP+FLOREA+KNEEG+CALF+ANKLEG+WRISTG+AGE+WEIG+HEIG+GEN
 
-modelo=lm(WEIG ~ BIAC+BIIL+BITRO+CHEST1+CHEST2+ELBOW+WRIST+KNEE+ANKLE+SHOUL+CHESTG+WAISTG+NAVEL+HIPGLUTE+BICEP+FLOREA+KNEEG+CALF+ANKLEG+WRISTG+AGE+HEIG+GEN, data = datos)
+modelo=lm(WEIG ~ BIAC+BIIL+BITRO+CHEST1+CHEST2+ELBOW+WRIST+KNEE+ANKLE+SHOUL+CHESTG+WAISTG+NAVEL+HIP + GLUTE+BICEP+FLOREA+KNEEG+CALF+ANKLEG+WRISTG+AGE+HEIG+GEN, data = bodYTrain)
+
+resumen = summary(modelo)
+
+# Significacion de c/ coeficiente
+
+# Como citerio para ver si una variable es significativa o no usaremos el test
+# Beta_i = 0 vs.  Beta_i != 0 con alfa 0.05
+# Es decir, si el p - valor del test de hipotesis anterios es mayor a 0.05, consideramos que la variable no 
+# es significativa, pues no podemos decir con confianza del 95% que la variable no se va a 0
+
+significativo = c()
+
+pValor = summary(modelo)$coefficients[, "Pr(>|t|)"]
+
+#Vector booleano que nos dice si una variable es o no significativa
+esSignificativa = c(pValor <= 0.05 )
+
+#Nombres de las variables que usamos 
+variables = names(body)
+
+#Nos fijamos cuales son las variables que consideramos significativas
+variablesSig = variables[esSignificativa]
+
+print("Las variables significativas segun nuestro citerio son")
+
+for(i in 1:length( variablesSig)){
+  print(variablesSig[i])
+  
+}
+
+# Analisis del F-Statistic
+
+resumen
+
+# EL F-statistic de nuestro modelo es un valor muy pequeno, esto esta en linea con el item anterior, pues lo que
+# mide el F-statistic es el p-valor del test :
+# H0: B_1 = B_2 =...=B_N = 0 vs. H1: existe B_i !=0
+
+#Como Tenemos parametros para los cuales el p-valor del test H0: B_i= 0 vs. H1: B_i !=0 es muy bajo (por ejemplo
+#  HEIG) tiene sentido que al hacer un test que toma como H0 que todos nuestros parametros son nulos, este tenga
+# un p-vlaor muy bajo, cosa que efectivamente sucede
+
+#Correlaciones lineales entre las variables explicativas
+
+
+
 

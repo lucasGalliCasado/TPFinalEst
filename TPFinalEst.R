@@ -183,3 +183,24 @@ lines(ksm$x, ksm$y, col = "red", lwd = 2)
 # agregar regresion lineal de cuadrados minimos
 
 # Falta poner la ventana no se como hacerlo
+
+# Regresion lineal -----------------------------------------------------------------------------------------------------------
+
+# G.)
+#a partir de aca es un intento
+# armamos el cjto de entrenamiento
+bodyt=data.frame()
+n=length(body)
+j=1
+for(i in 1:n){
+  if(TrainTest$V1[i]){
+    bodyt[j]=body[i]
+    j=j+1
+  }
+}
+
+# ajusto el modelo para predecir WIEG en funcion del resto
+#BIAC+BIIL+BITRO+CHEST1+CHEST2+ELBOW+WRIST+KNEE+ANKLE+SHOUL+CHESTG+WAISTG+NAVEL+HIPGLUTE+BICEP+FLOREA+KNEEG+CALF+ANKLEG+WRISTG+AGE+WEIG+HEIG+GEN
+
+modelo=lm(WEIG ~ BIAC+BIIL+BITRO+CHEST1+CHEST2+ELBOW+WRIST+KNEE+ANKLE+SHOUL+CHESTG+WAISTG+NAVEL+HIPGLUTE+BICEP+FLOREA+KNEEG+CALF+ANKLEG+WRISTG+AGE+HEIG+GEN, data = datos)
+

@@ -118,9 +118,8 @@ ksm <- ksmooth(WEIG_W,HEIG_W, "normal", bandwidth = 10)
 lines(ksm$x, ksm$y, col = "red", lwd = 2)
 
 # En el caso de los hombres, podemos ver que salvo el final la regresion no parametrica se parece mucho a una regresion lineal.
-# Por otro lado en las mujeres, no esta tan claro que la regresion parametrica sea parecida a una regresion lineal, ya que
-# esta tiene irregularidades mas pronunciadas. Por lo que sospechamos una regresion lineal para los hombres y una regresion
-# ¿cuadratica? para las mujeres.
+# Similarmente en las mujeres,la regresion no parametrica es parecida a una regresion lineal, sobre todo en la zona donde se concentran
+# los datos. Por lo que sospechamos una regresion lineal para los hombres y las mujeres.
 
 # E.)
 # calculo la estimacion en Xi sin usar el i-esimo dato
@@ -190,7 +189,8 @@ lines(ksm$x, ksm$y, col = "red", lwd = 2)
 regL_W <- lm(HEIG_W ~ WEIG_W)
 abline(regL_W, col = "blue",lwd =2)
 
-
+# Con esto podemos notar que una regresion lineal funciona notablemente, sobre todo en zonas
+# con gran concentracion de datos.
 
 
 
@@ -201,22 +201,22 @@ abline(regL_W, col = "blue",lwd =2)
 TrainTest= TrainTest$V1
 
 #Datos de Training del modelo
-bodYTrain = body[TrainTest,]
-colnames(bodYTrain)<- (c("BIAC","BIIL","BITRO","CHEST1","CHEST2","ELBOW","WRIST",
+bodyTrain = body[TrainTest,]
+colnames(bodyTrain)<- (c("BIAC","BIIL","BITRO","CHEST1","CHEST2","ELBOW","WRIST",
                     "KNEE","ANKLE","SHOUL","CHESTG","WAISTG","NAVEL","HIP","GLUTE","BICEP",
                     "FLOREA","KNEEG","CALF","ANKLEG","WRISTG","AGE","WEIG","HEIG","GEN"))
 
 
 #Datos de validacion del modelo
 bodyTest = body[!TrainTest,]
-colnames(bodYTest)<- (c("BIAC","BIIL","BITRO","CHEST1","CHEST2","ELBOW","WRIST",
+colnames(bodyTest)<- (c("BIAC","BIIL","BITRO","CHEST1","CHEST2","ELBOW","WRIST",
                          "KNEE","ANKLE","SHOUL","CHESTG","WAISTG","NAVEL","HIP","GLUTE","BICEP",
                          "FLOREA","KNEEG","CALF","ANKLEG","WRISTG","AGE","WEIG","HEIG","GEN"))
 
 
 # ajusto el modelo para predecir WIEG en funcion del resto
 
-modelo=lm(WEIG ~ BIAC+BIIL+BITRO+CHEST1+CHEST2+ELBOW+WRIST+KNEE+ANKLE+SHOUL+CHESTG+WAISTG+NAVEL+HIP + GLUTE+BICEP+FLOREA+KNEEG+CALF+ANKLEG+WRISTG+AGE+HEIG+GEN, data = bodYTrain)
+modelo=lm(WEIG ~ BIAC+BIIL+BITRO+CHEST1+CHEST2+ELBOW+WRIST+KNEE+ANKLE+SHOUL+CHESTG+WAISTG+NAVEL+HIP + GLUTE+BICEP+FLOREA+KNEEG+CALF+ANKLEG+WRISTG+AGE+HEIG+GEN, data = bodyTrain)
 
 resumen = summary(modelo)
 
@@ -224,9 +224,10 @@ resumen = summary(modelo)
 
 # Como citerio para ver si una variable es significativa o no usaremos el test
 # Beta_i = 0 vs.  Beta_i != 0 con alfa 0.05
-# Es decir, si el p - valor del test de hipotesis anterios es mayor a 0.05, consideramos que la variable no 
-# es significativa, pues no podemos decir con confianza del 95% que la variable no se va a 0
+# Es decir, si el p - valor del test de hipotesis anterior es mayor a 0.05, consideramos que la variable
+# es significativa, pues podemos decir con confianza del 95% que la variable no se va a 0
 
+# En que momento se usa esto?
 significativo = c()
 
 pValor = summary(modelo)$coefficients[, "Pr(>|t|)"]

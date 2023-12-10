@@ -256,12 +256,39 @@ resumen
 # mide el F-statistic es el p-valor del test :
 # H0: B_1 = B_2 =...=B_N = 0 vs. H1: existe B_i !=0
 
-#Como Tenemos parametros para los cuales el p-valor del test H0: B_i= 0 vs. H1: B_i !=0 es muy bajo (por ejemplo
-#  HEIG) tiene sentido que al hacer un test que toma como H0 que todos nuestros parametros son nulos, este tenga
-# un p-vlaor muy bajo, cosa que efectivamente sucede
+# Como tenemos muchos parametros, 11 de 25, para los cuales el p-valor del test H0: B_i= 0 vs. H1: B_i !=0 es muy bajo 
+# (por ejemplo HEIG) tiene sentido que al hacer un test que toma como H0 que todos nuestros parametros son nulos, este tenga
+# un p-vlaor muy bajo, cosa que efectivamente sucede.
 
-#Correlaciones lineales entre las variables explicativas
+# ¿Sospecha el efecto de alg´un fen´omeno? no entiendo a que se refiere
 
+# Correlaciones lineales entre las variables explicativas
 
+matriz_correlaciones = cor(bodyTrain)
 
+heatmap(matriz_correlaciones)
 
+# Como podemos ver hay una gran multicolinealidad entre las variables, esto es un problema ya que 
+# haria que los errores estandar de las estimaicones sea mayor. (lo dice cahtgpt)
+
+# Calculamos el error del modelo, ajustado con los datos de train, evaluado en los de test
+
+predicciones = predict(modelo, bodyTest)
+
+# No se con que medida quieren que calculemos el error, en este caso use el error cuadratico
+error = sum((bodyTest$WEIG - predicciones)^2)
+
+# H.)
+
+# Analizar con que criterio las elegimos
+# El heatmap agrupa segun covarianza, por lo que tengo entendido. 
+# Habria que elegir una variable de cada grupo.
+# Armaria el heatmap con las variables significativas, veria cuales variables se agrupan y de ahi elegir. 
+
+# I.) 
+
+# ni idea sobre LASSO
+
+# J.)
+
+# K.)

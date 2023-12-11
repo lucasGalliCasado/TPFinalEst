@@ -16,6 +16,8 @@ colnames(body)<- (c("BIAC","BIIL","BITRO","CHEST1","CHEST2","ELBOW","WRIST",
  
 #Nos fijamos si hay datos NULL
 any(is.na(body))
+#Luego cambiar por na.omit(body)
+
 
 #Nos Fijamos el tipo de dato de cada columna
 sapply(body, class)
@@ -287,7 +289,7 @@ error = sum((bodyTest$WEIG - predicciones)^2)/length(bodyTest)
 # H.)
 
 # Para comezar a eliminar variables, podriamos empezar por ver cuales tienen una correlacion muy alta.
-# Visualmente esto lo podemos apreciar via heatmap, sin embargo resulta util definir un criterio numerico 
+# Visualmente esto lo podemos apreciar via heatmap, sin embargo resulta util definir un criterio numerico http://127.0.0.1:31945/graphics/plot_zoom_png?width=1455&height=761
 # para agrupar variables segun corelacion( i.e. por distacia a 1 o -1). De esta manera obtendremos una
 # particiones del grupo de covariables y tomaremos una variable de cada grupo de esta particion, para seleccionar
 # la variable de cada particion, tomaremos la de mayor signifciacion. 
@@ -296,8 +298,91 @@ error = sum((bodyTest$WEIG - predicciones)^2)/length(bodyTest)
 
 # I.) 
 
-# ni idea sobre LASSO
+# Matriz de diseno(sin intercept)
+X = model.matrix(modelo)[,-1] 
+
+dim(X)
+
+TrainTestV = TrainTest$V1
+
+
+#Vector de respuestas
+res = body$WEIG[TrainTestV]
+
+
+#Valores de lambda 
+grilla = 10^seq(3,-2.5,length = 100)
+
+
+# Hacemos LASSO sobre grilla
+lasso = glmnet(X,res, alpha = 1, lambda = grilla  )
+
+dim(coef(lasso))
+
+lasso$lambda[90]
+coef(lasso)[,90]
+
+lasso$lambda[50]
+coef(lasso)[,50]
+
+lasso$lambda[20]
+coef(lasso)[,20]
+
+
+plot(lasso,label = T,xvar="lambda")
+
+#Podemos ver que cuando nuestro lambda es chico, hay muchas covariables que "sobreviven"
+# es decir, no se van a cero. Esto tiene sentido pues un lambda chico significia que los grandes
+# valor y las cov. no nulas no llevan tanto impacto, por ende, es mas permisivo a que una variable 
+# pueda manterse no nulo.
+
+# A mayor lambda vemos como el criterio se torna menos laxo, mas covariables terminan siendo 0, y las 
+# que no lo hacen reducen su valor. Eventualmente, la unica variable que sobrevive es la intercept, pues 
+# es la unica que no "castigamos" por ser no nula a la hora de hacer LASSO.
+
+# En el grafico vemos que a partir de log(Lambda) = 2 solo hay 5 variables no nulas en contraste a las 23
+# no nulas( no tomamos en cuenta el intercept) que teniamos al comienzo con un lambda muy grande.
+
+#Ya a partir de log(Lambda) = 3 todas nuestras variables son nulas.
+
+
 
 # J.)
 
+cvOut = cv.glmnet(X,res, alpha = 1)
+plot(cvOut, label = "Log(Lambda) - Error")
+
+mejorLambda = cvOut$lambda.min
+mejorLogLambda = log(cvOut$lambda.min)
+
+#Veamos como resulta nuestro modelo al usar el lamda recomendado 
+lassoOP = glmnet(X,res, alpha = 1, lambda = mejorLambda )
+
+dim(coef(lassoOP))
+
+#Valor de Covariables aplicando LASSO "optimo"
+coef(lassoOP)
+
+#Calculamos el MSE utilizando los datos de validacion de bodyTest
+
+#Calculamos las predicciones del sistema que obtuvimos con LASSO
+
+bodyTestSinWIEG = bodyTest[, -which(names(bodyTest) == "WEIG")]
+bodyTestSinWIEGM = matrix(bodyTestSinWIEG)
+
+lassoOPpred = predict(lasso, s = mejorLambda , newx = bodyTestSinWIEGM )
+
+
+#Calculamos el error de la prediccion
+errorLasso = mean((lassoOPpred - bodyTest)^2)
+
+
+
+
 # K.)
+
+
+
+
+
+

@@ -1,3 +1,8 @@
+
+library(ISLR)
+library(plotmo)
+library(glmnet)
+
 TrainTest <- read.table("TrainTest.txt")
 
 body <- read.csv("body.csv",header = FALSE)
@@ -269,21 +274,25 @@ matriz_correlaciones = cor(bodyTrain)
 heatmap(matriz_correlaciones)
 
 # Como podemos ver hay una gran multicolinealidad entre las variables, esto es un problema ya que 
-# haria que los errores estandar de las estimaicones sea mayor. (lo dice cahtgpt)
+# haria que los errores estandar de las estimaicones sea mayor.\
 
-# Calculamos el error del modelo, ajustado con los datos de train, evaluado en los de test
-
+# Calculamos el error del modelo
 predicciones = predict(modelo, bodyTest)
 
-# No se con que medida quieren que calculemos el error, en este caso use el error cuadratico
-error = sum((bodyTest$WEIG - predicciones)^2)
+# Dado que separamos datos de entrenamiento y datos de prueba, lo logico es calcular 
+# el error a partir de las predicciones de bodyTest para evitar sobreestimaciones
+
+error = sum((bodyTest$WEIG - predicciones)^2)/length(bodyTest)
 
 # H.)
 
-# Analizar con que criterio las elegimos
-# El heatmap agrupa segun covarianza, por lo que tengo entendido. 
-# Habria que elegir una variable de cada grupo.
-# Armaria el heatmap con las variables significativas, veria cuales variables se agrupan y de ahi elegir. 
+# Para comezar a eliminar variables, podriamos empezar por ver cuales tienen una correlacion muy alta.
+# Visualmente esto lo podemos apreciar via heatmap, sin embargo resulta util definir un criterio numerico 
+# para agrupar variables segun corelacion( i.e. por distacia a 1 o -1). De esta manera obtendremos una
+# particiones del grupo de covariables y tomaremos una variable de cada grupo de esta particion, para seleccionar
+# la variable de cada particion, tomaremos la de mayor signifciacion. 
+
+
 
 # I.) 
 

@@ -286,13 +286,79 @@ error = sum((bodyTest$WEIG - predicciones)^2)/length(bodyTest)
 
 # H.)
 
-# Para comezar a eliminar variables, podriamos empezar por ver cuales tienen una correlacion muy alta.
-# Visualmente esto lo podemos apreciar via heatmap, sin embargo resulta util definir un criterio numerico 
-# para agrupar variables segun corelacion( i.e. por distacia a 1 o -1). De esta manera obtendremos una
-# particiones del grupo de covariables y tomaremos una variable de cada grupo de esta particion, para seleccionar
-# la variable de cada particion, tomaremos la de mayor signifciacion. 
+# Me fijo si la variable i-esima puede entrar en el cluster, o sea si hay alguna variable (j) con covarianza mayor a coef 
+# entre i y j
+va_aca = function(matriz, coef, cluster,i){
+  res = FALSE
+  for (j in cluster){
+    if(abs(matriz[i,j])>=coef){
+      return(TRUE)
+    }
+  }
+  return(res)
+}
 
+clusters = function(data, coef){ # le paso la informacion y el coeficiente de correlacion soportado,
+                                 # o sea si la correlacion es mayor a coef pueden llegar a estar en el mismo cluster
+  
+  matriz = cor(data) # matriz de covarianzas
+  n = length(colnames(data))
+  res = list() # lista de clusters
+  usados = c() # voy guardando que varibles ya tienen un cluster asignado
+  
+  for (i in 1:n){
+    if(!(i %in% usados)){ # si la i-esima variable no tiene un cluster creo uno con solo esta
+      cluster = c(i)
+      usados = append(usados,i)
+      for(j in 1:n){ # voy agregando variables al cluster, que no use y son adecuadas para este
+        if(!(j %in% usados) && va_aca(matriz,coef,cluster,j)){
+          cluster = append(cluster,j)
+          usados = append(usados,j)
+        }
+      }
+      res = append(res, list(cluster))
+    }
+  }
+  return(res)
+}
 
+# Armamos los grupos con los datos de entrenamiento y un coeficiente de covarianza mayor a 0.7 de dos a dos entre los grupos
+# Recordamos sacar WEIG de bodyTrain
+grupos= clusters(subset(bodyTrain,select=-WEIG),0.7)
+
+# Luego de cada grupo separamos la variable mas significativa
+
+variables_filtradas=c()
+
+for(i in 1:length(grupos)){
+  cluster=grupos[[i]]
+  temp=cluster[1]
+  for(j in cluster){
+    if(pValor[j+1]>pValor[temp+1]){ # sumamos uno ya que estan corridos los valores al tener el intercept
+      temp=j
+    }
+  }
+  
+  variables_filtradas=append(variables_filtradas,temp)
+}
+
+variables_filtradas=colnames(subset(bodyTrain,select=-WEIG))[variables_filtradas]
+print(variables_filtradas)
+
+bodyTrain_filtrado = subset(bodyTrain,select=append(variables_filtradas,"WEIG"))
+
+modelo_filtrado = lm(WEIG ~ ELBOW+BIIL+BITRO+CHEST1+AGE,data=bodyTrain_filtrado)
+
+resumen_filtrado = summary(modelo_filtrado)
+
+# Como se esperaba al tener menos informacion en el segundo modelo, con los datos filtrados, el R2 ajustado va a ser menor.
+# Es decir, el error del segundo modelo es mayor. En linea con esto, vemos que la varianza residual es mayor en el segundo modelo,
+# ¿ya que al a ver mas error este a su vez va a tener mas varianza?.
+# Por otro lado, la significatividad de los coeficientes ...
+
+# Cada aclarar que con lo que hicimos nos aseguramos que haya alguna de las variables que antes marcamos como significativas,
+# ya que luego de separar los clusters, nos quedamos con la que tenia mayor significacion de cada cluster. Por lo que 
+# en algun cluster debe estar la mayor y por lo tanto la hemos elegido en nuestro filtrado de ese cluster.
 
 # I.) 
 
@@ -301,3 +367,4 @@ error = sum((bodyTest$WEIG - predicciones)^2)/length(bodyTest)
 # J.)
 
 # K.)
+

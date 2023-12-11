@@ -16,8 +16,6 @@ colnames(body)<- (c("BIAC","BIIL","BITRO","CHEST1","CHEST2","ELBOW","WRIST",
  
 #Nos fijamos si hay datos NULL
 any(is.na(body))
-#Luego cambiar por na.omit(body)
-
 
 #Nos Fijamos el tipo de dato de cada columna
 sapply(body, class)
@@ -288,101 +286,86 @@ error = sum((bodyTest$WEIG - predicciones)^2)/length(bodyTest)
 
 # H.)
 
-# Para comezar a eliminar variables, podriamos empezar por ver cuales tienen una correlacion muy alta.
-# Visualmente esto lo podemos apreciar via heatmap, sin embargo resulta util definir un criterio numerico http://127.0.0.1:31945/graphics/plot_zoom_png?width=1455&height=761
-# para agrupar variables segun corelacion( i.e. por distacia a 1 o -1). De esta manera obtendremos una
-# particiones del grupo de covariables y tomaremos una variable de cada grupo de esta particion, para seleccionar
-# la variable de cada particion, tomaremos la de mayor signifciacion. 
+# Me fijo si la variable i-esima puede entrar en el cluster, o sea si hay alguna variable (j) con covarianza mayor a coef 
+# entre i y j
+va_aca = function(matriz, coef, cluster,i){
+  res = FALSE
+  for (j in cluster){
+    if(abs(matriz[i,j])>=coef){
+      return(TRUE)
+    }
+  }
+  return(res)
+}
 
+clusters = function(data, coef){ # le paso la informacion y el coeficiente de correlacion soportado,
+                                 # o sea si la correlacion es mayor a coef pueden llegar a estar en el mismo cluster
+  
+  matriz = cor(data) # matriz de covarianzas
+  n = length(colnames(data))
+  res = list() # lista de clusters
+  usados = c() # voy guardando que varibles ya tienen un cluster asignado
+  
+  for (i in 1:n){
+    if(!(i %in% usados)){ # si la i-esima variable no tiene un cluster creo uno con solo esta
+      cluster = c(i)
+      usados = append(usados,i)
+      for(j in 1:n){ # voy agregando variables al cluster, que no use y son adecuadas para este
+        if(!(j %in% usados) && va_aca(matriz,coef,cluster,j)){
+          cluster = append(cluster,j)
+          usados = append(usados,j)
+        }
+      }
+      res = append(res, list(cluster))
+    }
+  }
+  return(res)
+}
 
+# Armamos los grupos con los datos de entrenamiento y un coeficiente de covarianza mayor a 0.7 de dos a dos entre los grupos
+# Recordamos sacar WEIG de bodyTrain
+grupos= clusters(subset(bodyTrain,select=-WEIG),0.7)
+
+# Luego de cada grupo separamos la variable mas significativa
+
+variables_filtradas=c()
+
+for(i in 1:length(grupos)){
+  cluster=grupos[[i]]
+  temp=cluster[1]
+  for(j in cluster){
+    if(pValor[j+1]>pValor[temp+1]){ # sumamos uno ya que estan corridos los valores al tener el intercept
+      temp=j
+    }
+  }
+  
+  variables_filtradas=append(variables_filtradas,temp)
+}
+
+variables_filtradas=colnames(subset(bodyTrain,select=-WEIG))[variables_filtradas]
+print(variables_filtradas)
+
+bodyTrain_filtrado = subset(bodyTrain,select=append(variables_filtradas,"WEIG"))
+
+modelo_filtrado = lm(WEIG ~ ELBOW+BIIL+BITRO+CHEST1+AGE,data=bodyTrain_filtrado)
+
+resumen_filtrado = summary(modelo_filtrado)
+
+# Como se esperaba al tener menos informacion en el segundo modelo, con los datos filtrados, el R2 ajustado va a ser menor.
+# Por lo que el primer modelo se ajusta mejor al problema. Ademas vemos que la varianza residual es mayor en el 
+# segundo modelo.
+# Por otro lado, el p-valor de cada covariable se redujo en gran medida, ya que al ser menos estas aportan mas a la prediccion.
+# En particular, como todos sus p-valores son menores a 0.05, todas son significativas.
+
+# Cada aclarar que con lo que hicimos nos aseguramos que haya alguna de las variables que antes marcamos como significativas,
+# ya que luego de separar los clusters, nos quedamos con la que tenia mayor significacion de cada cluster. Por lo que 
+# en algun cluster debe estar la mayor y por lo tanto la hemos elegido en nuestro filtrado de ese cluster.
 
 # I.) 
 
-# Matriz de diseno(sin intercept)
-X = model.matrix(modelo)[,-1] 
-
-dim(X)
-
-TrainTestV = TrainTest$V1
-
-
-#Vector de respuestas
-res = body$WEIG[TrainTestV]
-
-
-#Valores de lambda 
-grilla = 10^seq(3,-2.5,length = 100)
-
-
-# Hacemos LASSO sobre grilla
-lasso = glmnet(X,res, alpha = 1, lambda = grilla  )
-
-dim(coef(lasso))
-
-lasso$lambda[90]
-coef(lasso)[,90]
-
-lasso$lambda[50]
-coef(lasso)[,50]
-
-lasso$lambda[20]
-coef(lasso)[,20]
-
-
-plot(lasso,label = T,xvar="lambda")
-
-#Podemos ver que cuando nuestro lambda es chico, hay muchas covariables que "sobreviven"
-# es decir, no se van a cero. Esto tiene sentido pues un lambda chico significia que los grandes
-# valor y las cov. no nulas no llevan tanto impacto, por ende, es mas permisivo a que una variable 
-# pueda manterse no nulo.
-
-# A mayor lambda vemos como el criterio se torna menos laxo, mas covariables terminan siendo 0, y las 
-# que no lo hacen reducen su valor. Eventualmente, la unica variable que sobrevive es la intercept, pues 
-# es la unica que no "castigamos" por ser no nula a la hora de hacer LASSO.
-
-# En el grafico vemos que a partir de log(Lambda) = 2 solo hay 5 variables no nulas en contraste a las 23
-# no nulas( no tomamos en cuenta el intercept) que teniamos al comienzo con un lambda muy grande.
-
-#Ya a partir de log(Lambda) = 3 todas nuestras variables son nulas.
-
-
+# ni idea sobre LASSO
 
 # J.)
 
-cvOut = cv.glmnet(X,res, alpha = 1)
-plot(cvOut, label = "Log(Lambda) - Error")
-
-mejorLambda = cvOut$lambda.min
-mejorLogLambda = log(cvOut$lambda.min)
-
-#Veamos como resulta nuestro modelo al usar el lamda recomendado 
-lassoOP = glmnet(X,res, alpha = 1, lambda = mejorLambda )
-
-dim(coef(lassoOP))
-
-#Valor de Covariables aplicando LASSO "optimo"
-coef(lassoOP)
-
-#Calculamos el MSE utilizando los datos de validacion de bodyTest
-
-#Calculamos las predicciones del sistema que obtuvimos con LASSO
-
-bodyTestSinWIEG = bodyTest[, -which(names(bodyTest) == "WEIG")]
-bodyTestSinWIEGM = matrix(bodyTestSinWIEG)
-
-lassoOPpred = predict(lasso, s = mejorLambda , newx = bodyTestSinWIEGM )
-
-
-#Calculamos el error de la prediccion
-errorLasso = mean((lassoOPpred - bodyTest)^2)
-
-
-
-
 # K.)
-
-
-
-
-
 

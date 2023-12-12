@@ -499,7 +499,25 @@ r_squaredLASSO <- 1 - (ss_residual / ss_total)
 
 # K.)
 
-# linear de todo, lasso, el de componentes conexas.
+#Modelo Filtrado: R-Squared : 0.83, error de 28.2 ,5 covaribales 
+
+#Modelo LASSO ; R-Squared 0.966 , error de 5.712, 13 covariables(no nulas y contando el intercept)
+
+#Modelo Linal "Naive" : R-Squared : 0.98, error de 2.124
+
+
+# El modelo que propusimos, por mas que utilize pocas covariables, tiene un peor ajuste y error que los
+# otros dos modelos
+
+# El modelo lineal "Naive" tienen un muy buen ajuste y el error mas chico, sin embargo, tiene muchas covaribles
+# que resultan redundantes, no solo por su alta correlacion, sino ademas porque logramos un ajuste R-Squared
+# casi tan bueno con 12 de sus covaribales originales en 0 en el modelo propuesto por el metodo LASSO.
+
+# Esta reduccion de covariables significativas en el modelo LASSO tiene un impacto despreciable sobre el ajuste del 
+# modelo, sin embargo su costo se hace ver en el error, el cual se duplica.
+
+
+
 
 
 

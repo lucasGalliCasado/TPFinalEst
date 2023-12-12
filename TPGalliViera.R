@@ -172,11 +172,25 @@ plot(WEIG_M,HEIG_M,main = "Peso-Altura Hombres, regresion no parametrica con ven
 # Reg. no parametrica con h optimo
 ksm <- ksmooth(WEIG_M,HEIG_M, "normal", bandwidth = h_M)
 lines(ksm$x, ksm$y, col = "red", lwd = 2)
-# Regresion lineal de cuadrados minimos
+
+#Regresion lineal de cuadrados minimos
 regL_M <- lm(HEIG_M ~ WEIG_M)
 abline(regL_M, col = "blue",lwd =2)
 abline()
-# Agregar la ventana optima en el grafico !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# Aca agrega la ventana optima en todos los puntos que usamos para hacer la regresion
+intervalos = c()
+for(i in 1:length(WEIG_M)){
+  intervalos = append(intervalos,WEIG_M-h_M/2)
+  intervalos = append(intervalos,WEIG_M+h_M/2)
+  
+}
+for(j in 1:intervalos){
+  abline(v = intervalos[j],col = 'green',lty = 2)
+}
+
+
+
 
 # Nota: Para verificar la respuesta, explorar la funci´on train de la librer´ıa caret.
 
@@ -351,11 +365,21 @@ for(i in 1:length(grupos)){
 variables_filtradas=colnames(subset(bodyTrain,select=-WEIG))[variables_filtradas]
 print(variables_filtradas)
 
+# Repetimos el proceso de entrenamiento y validacion con el modelo filtrado
+
 bodyTrain_filtrado = subset(bodyTrain,select=append(variables_filtradas,"WEIG"))
+
+bodyTest_filtrado = subset(bodyTest,select=append(variables_filtradas,"WEIG"))
 
 modelo_filtrado = lm(WEIG ~ ELBOW+BIIL+BITRO+CHEST1+AGE,data=bodyTrain_filtrado)
 
 resumen_filtrado = summary(modelo_filtrado)
+
+predicion_filtrado <- predict(modelo_filtrado, newdata = bodyTest_filtrado)
+
+#Calculamos el error del modelo filatrado
+
+error_filtrado = mean((predicion_filtrado - bodyTest_filtrado$WEIG)^2)
 
 # Como se esperaba al tener menos informacion en el segundo modelo, con los datos filtrados, el R2 ajustado va a ser menor.
 # Por lo que el primer modelo se ajusta mejor al problema. Ademas vemos que la varianza residual es mayor en el 
@@ -455,12 +479,23 @@ for(i in 1:length( variablesSig)){
 bodyTestSinWIEG = subset(bodyTest,select=-WEIG)
 bodyTestSinWIEGM = as.matrix(bodyTestSinWIEG)
 
+#Valores predecidos de los datos de validacion usando el modelo tras aplicar LASSO
 lassoOPpred = predict(lassoOP, newx = bodyTestSinWIEGM)
 
 #Calculamos el error de la prediccion
 errorLasso = mean((lassoOPpred - bodyTest$WEIG)^2)
-
 # Notemos que el error del metodo usado en el item g) es casi 3 veces el error de utilizar lasso.
+
+# Ahora vamos a calcular el coeficiente R-Squared del modelo que obtuvimos con LASSO
+
+valReal <- bodyTest$WEIG
+
+meanReal <- mean(valReal)
+
+ss_total <- sum((valReal - meanReal)^2)
+ss_residual <- sum((valReal - lassoOPpred)^2)
+r_squaredLASSO <- 1 - (ss_residual / ss_total)
+
 
 # K.)
 

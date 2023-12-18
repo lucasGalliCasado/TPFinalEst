@@ -44,6 +44,8 @@ WEIG_W <-  body[body$GEN == 0, ]$WEIG
 
 T_W <- median(WEIG_W)
 
+#Primero realizamos un Bootstrap uniforme sobre los datos que se proveen 
+
 #BootStrap para pesos de hombres
 B = 1000
 
@@ -67,6 +69,8 @@ z <- qnorm(1-alfa/2)
 
 IDC_Men <- c(T_M - z*seBootMen,T_M + z*seBootMen)
 
+print("El intervalo de canfianza para la mediana masculina utilizando BS Uniforme es: ", IDC_Men)
+
 #BootStrap para pesos de Mujeres
 
 # Tomamos 1000 muestras de tamano |WEIGH_M| de los datos que tenemos 
@@ -81,7 +85,7 @@ for(i in 1:B){
 
 seBootWom <- sd(estMedWom)
 
-#Definimos el intervalo de confianza aproximado para la mediana del peso masculino
+#Definimos el intervalo de confianza aproximado para la mediana del peso femenino
 alfa <- 0.05
 
 #Z_alfa/2
@@ -89,9 +93,78 @@ z <- qnorm(1-alfa/2)
 
 IDC_Wom <- c(T_M - z*seBootWom,T_M + z*seBootWom)
 
+print("El intervalo de canfianza para la mediana femenina utilizando BS Uniforme es: ", IDC_Wom)
+
+
+# Realizamos un Bootstrap Parametrico
+
+# Veamos si es razonable asumir la normalidad de los pesos de cada genero
+
+boxplot(WEIG_M)
+
+boxplot(WEIG_W)
+#Ambos boxplot son razonablemente simetricos
+
+qqnorm(WEIG_M,main = "Q-Q plot de pesos Masculinos")
+
+qqnorm(WEIG_W,main = "Q-Q plot de pesos Femeninos")
+#Ninguno de los dos QQplots se aleja demasiado de lo que se espera del QQPplot de una normal
+
+# A partir de los graficos anteriores no hay fuertes indicadores de que los datos no son normales, por ende
+# en nuestro bootstrap parametrico, trabajaremos bajo esta suposicion
+
+mu_M = mean(WEIG_M)
+
+mu_W = mean(WEIG_W)
+
+sd_M = sd(WEIG_M)
+
+sd_W = sd(WEIG_W)
+
+# Para definir las distribuciones usamos los datos anteriores 
+
+#Bootstrap Parametrico de pesos Masculinos
+estmed_M = c()
+n_M = length(WEIG_M)
+
+for(i in 1:B){
+  xboot <- rnorm(n_M, mean = mu_M, sd = sd_M)
+  temp = median(xboot)
+  estmed_M = c(estmed_M,temp)
+}
+
+seBoot_M = sd(estmed_M)
+
+#Bootstrap Parametrico de pesos Femenino
+estmed_W = c()
+n_W = length(WEIG_W)
+
+for(i in 1:B){
+  xboot <- rnorm(n_W, mean = mu_W, sd = sd_W)
+  temp = median(xboot)
+  estmed_W = c(estmed_W,temp)
+}
+
+seBoot_W = sd(estmed_W)
+
+
+#Caluculamos los intervalos de confianza para cada una de los Bootstrap
+print("Para el Bootstrap parametrico se tomo una distribucion normal con la media y la varianaz muestrol como parametros en ambos casos")
+
+IDC_MenParam <- c(T_M - z*seBoot_M,T_M + z*seBoot_M)
+
+print("El intervalo de canfianza para la mediana masculina utilizando BS Parametrico es: ", IDC_MenParam)
+
+IDC_WomParam <- c(T_W - z*seBoot_M,T_W + z*seBoot_W)
+
+print("El intervalo de canfianza para la mediana femenino utilizando BS Parametrico es: ", IDC_WomParam)
+
+
 #Se podria decir que el peso no es una medida muy significativa a la hora de diferenciar a un hombre de una mujer, 
 #ya que el intervalor de las mujeres esta contenido en el de los hombres. Aunque los hombres tienen mas dispersion. 
 #Ademas a la hora de diferenciar grupos de hombres de grupos de mujeres, podemos usar el desvio estandar como diferenciador.
+
+
 
 #C)
 
@@ -189,24 +262,28 @@ for(j in 1:intervalos){
   abline(v = intervalos[j],col = 'green',lty = 2)
 }
 
-
-
-
-# Nota: Para verificar la respuesta, explorar la funci´on train de la librer´ıa caret.
-
-# Agregar el dibujo de train con el metodo glm !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-# F.)
-
-# Grafico de los hombres
 h_M=h_opt(WEIG_M,HEIG_M,hs)
-plot(WEIG_M,HEIG_M,main = "Peso-Altura Hombres, regresion no parametrica con ventana 5 y regresion lineal", xlab = "Peso" , ylab = "Altura")
+plot(WEIG_M,HEIG_M,main = "Peso-Altura Hombres, regresion no parametrica con ventana 5 y regresion lineal", xlab = "Peso" , ylab = "Altura", col="white")
 # Reg. no parametrica con h optimo
 ksm <- ksmooth(WEIG_M,HEIG_M, "normal", bandwidth = h_M)
 lines(ksm$x, ksm$y, col = "red", lwd = 2)
-# Regresion lineal de cuadrados minimos
+
+#Regresion lineal de cuadrados minimos
 regL_M <- lm(HEIG_M ~ WEIG_M)
 abline(regL_M, col = "blue",lwd =2)
+abline()
+
+# Aca agrega la ventana optima en todos los puntos que usamos para hacer la regresion
+intervalos = c()
+for(i in 1:length(WEIG_M)){
+  intervalos = append(intervalos,WEIG_M-h_M/2)
+  intervalos = append(intervalos,WEIG_M+h_M/2)
+  
+}
+for(j in 1:intervalos){
+  abline(v = intervalos[j],col = 'green',lty = 2)
+}
+
 
 # Grafico de las mujeres
 h_W=h_opt(WEIG_W,HEIG_W,hs)
@@ -216,10 +293,16 @@ lines(ksm$x, ksm$y, col = "red", lwd = 2)
 # Regresion lineal de cuadrados minimos
 regL_W <- lm(HEIG_W ~ WEIG_W)
 abline(regL_W, col = "blue",lwd =2)
-
-# Con esto podemos notar que una regresion lineal funciona notablemente, sobre todo en zonas
-# con gran concentracion de datos.
-
+# Aca agrega la ventana optima en todos los puntos que usamos para hacer la regresion
+intervalos = c()
+for(i in 1:length(WEIG_W)){
+  intervalos = append(intervalos,WEIG_W-h_W/2)
+  intervalos = append(intervalos,WEIG_W+h_W/2)
+  
+}
+for(j in 1:intervalos){
+  abline(v = intervalos[j],col = 'green',lty = 2)
+}
 
 
 # Regresion lineal -----------------------------------------------------------------------------------------------------------

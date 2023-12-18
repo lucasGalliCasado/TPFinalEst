@@ -287,7 +287,7 @@ for(j in 1:intervalos){
 
 # Grafico de las mujeres
 h_W=h_opt(WEIG_W,HEIG_W,hs)
-plot(WEIG_W,HEIG_W,main = "Peso-Altura Mujeres, regresion no parametrica con ventana 5 y regresion lineal", xlab = "Peso" , ylab = "Altura")
+plot(WEIG_W,HEIG_W,main = "Peso-Altura Mujeres, regresion no parametrica con ventana 5 y regresion lineal", xlab = "Peso" , ylab = "Altura", col="white")
 ksm <- ksmooth(WEIG_W,HEIG_W, "normal", bandwidth = h_W)
 lines(ksm$x, ksm$y, col = "red", lwd = 2)
 # Regresion lineal de cuadrados minimos
@@ -303,6 +303,10 @@ for(i in 1:length(WEIG_W)){
 for(j in 1:intervalos){
   abline(v = intervalos[j],col = 'green',lty = 2)
 }
+
+# Graficamos los errores de convalidacion cruzada de cada h de nuestra grilla
+
+
 
 
 # Regresion lineal -----------------------------------------------------------------------------------------------------------
